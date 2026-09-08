@@ -1,0 +1,29 @@
+import {createServer} from 'vite';
+import react from '@vitejs/plugin-react';
+import assert from 'node:assert/strict';
+const server=await createServer({configFile:false,server:{middlewareMode:true},appType:'custom',plugins:[react()],resolve:{alias:{'@':process.cwd()}}});
+try{
+const {paperHTML,gradingData}=await server.ssrLoadModule('/lib/export.tsx');
+const {sampleExam}=await server.ssrLoadModule('/lib/sample.ts');
+const student=paperHTML(sampleExam),teacher=paperHTML(sampleExam,true);
+assert.match(student,/class="katex/,'LaTeX rendered as math');
+assert.match(student,/@page\{size:A4/,'A4 print rules included');
+assert.equal((student.match(/class="answer-line /g)||[]).length,56,'all per-question answer lines preserved');
+assert.ok(!student.includes('选择 B，得 4 分'),'student paper omits answer key');
+assert.ok(teacher.includes('选择 B，得 4 分'),'teacher paper preserves rubric');
+assert.ok(teacher.includes('参考答案'),'teacher answer included');
+assert.match(student,/fonts\/KaTeX/,'offline font references present');
+const a={id:'demo',exam:sampleExam,name:'测试',startedAt:0,deadline:1800000,submittedAt:150000,status:'submitted',current:0,answers:{q1:{selected:['B']},q4:{text:'x = 6',attachments:[{name:'proof.txt',type:'text/plain',data:'data:text/plain;base64,aGVsbG8='}]}},flagged:[],focusMode:false,events:[]};
+const d=gradingData(a);
+assert.equal(d.questions[0].autoScore,4);
+assert.equal(d.questions[3].autoScore,null);
+assert.deepEqual(d.questions[3].rubric,sampleExam.sections[0].questions[3].rubric);
+assert.equal(d.attempt.answers.q4.attachments[0].data,'data:text/plain;base64,aGVsbG8=');
+assert.equal(d.summary.manualTotal,24);
+const {renderToStaticMarkup}=await import('react-dom/server');
+const React=await import('react');
+const {RichText}=await server.ssrLoadModule('/components/rich-text.tsx');
+const rendered=renderToStaticMarkup(React.createElement(RichText,{text:'$\\frac{1}{2}$\n\n$$x^2+1$$\n\n<script>alert(1)</script>\n\n[bad](javascript:alert(1))'}));
+assert.match(rendered,/katex-mathml/);assert.match(rendered,/katex-display/);assert.ok(!rendered.includes('<script>'));assert.ok(!rendered.includes('href="javascript:'));
+console.log('Export/render checks passed: LaTeX, A4 layout, 56 answer lines, hidden student answers, complete rubrics, attachments, pending scores and safe Markdown.');
+}finally{await server.close();}
