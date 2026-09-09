@@ -1,6 +1,20 @@
 # MockExam Studio
 
-中文个人模拟考试工作台。技术栈：React 19 / Vinext、KaTeX、CodeMirror 6、IndexedDB。
+支持中英文的个人模拟考试工作台：把 AI 按规范生成的 JSON 试卷，变成在线限时考试或带手写留白的纸质试卷。
+
+[在线使用 MockExam Studio](https://mockexam-studio.marswang.chatgpt.site/)
+
+技术栈：React 19 / Vinext、KaTeX、CodeMirror 6、IndexedDB。
+
+## 快速开始
+
+1. 在“出题 Prompt”里设置考试要求并复制正文。
+2. 在“AI 出题规范”里单独复制完整文件规范。
+3. 把复习资料、Prompt 和规范一起交给自己的 AI，生成 JSON 试卷。
+4. 导入网站，选择在线限时作答或导出打印卷。
+5. 交卷后导出 AI 批改包，保留参考答案、评分规则和 Flag 标记。
+
+网站本身不调用 AI，也不需要填写 AI API Key。可先使用内置示例体验。
 
 ## 功能
 - 本地 JSON 试卷导入与逐字段验证；14 种题型、共享材料、Markdown / LaTeX。
@@ -11,13 +25,15 @@
 - 选择/多选/判断按 exact / partial 规则自动批改；人工题保留待批状态。
 - 代码编辑支持 Tab / Shift+Tab、4 空格缩进、换行自动缩进、括号配对、行号、语法高亮和撤销重做。支持 Python、JavaScript、TypeScript、C/C++、Java、SQL；纯文本作为其他语言后备。编程题默认开启；其他文字解答题可切换。
 - 打印 ZIP 含 A4 留白学生卷、教师评分卷、原始试卷及离线数学字体；用浏览器打印/另存 PDF。
-- AI 批改 ZIP 保留原题、学生回答、参考答案、所有评分细则与附件。
+- AI 批改 ZIP 保留原题、学生回答、参考答案、所有评分细则与附件；逐题保留 Flag，并要求 AI 对标记题额外讲解，即使已经答对。
 
 ## 使用
 启动后使用内置 8 题示例，或进入「AI 出题规范」，复制完整规范和示例交给 AI 生成试卷。规范事实源：`lib/rules.ts`；验证器：`lib/exam.ts`。
 
+需要 Node.js 22.13 或更高版本。
+
 ```sh
-npm install
+npm ci
 npm run dev
 npm run build
 ```
