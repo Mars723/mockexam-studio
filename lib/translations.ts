@@ -1,4 +1,32 @@
 export const translations: Record<string, string> = {
+  '试卷已删除，已有答题记录已保留。':
+    'Exam deleted. Existing attempts have been kept.',
+  '考试已结束，已作答内容已保留，可查看结果或导出。':
+    'Exam ended. Your responses have been kept for review or export.',
+  '答题记录已删除。': 'Attempt deleted.',
+  '删除这份试卷？': 'Delete this exam?',
+  '删除这条答题记录？': 'Delete this attempt?',
+  '结束并退出本次考试？': 'End and exit this exam?',
+  '只从“我的试卷”移除此试卷。已有答题记录、答案和进行中的考试会保留。之后可以重新导入试卷文件。':
+    'This removes the exam from My exams. Existing attempts, answers and any ongoing exam will be kept. You can import the exam file again later.',
+  '这场考试仍在进行中。删除会终止本次考试，并移除这条记录的答案、附件和 Flag。试卷本身及其他记录会保留。删除后无法直接撤销。若想保留作答，请取消并选择“结束考试”。':
+    'This exam is still in progress. Deleting it ends this attempt and removes its answers, attachments and flags. The exam in your library and other attempts will be kept. This cannot be undone directly. To keep your work, cancel and choose End exam.',
+  '删除这条记录的答案、附件和 Flag。试卷本身及其他答题记录会保留。删除后无法直接撤销；如需保留，请先下载备份或批改包。':
+    'This removes the answers, attachments and flags for this attempt. The exam in your library and other attempts will be kept. This cannot be undone directly; download a backup or grading package first if you need to keep this work.',
+  '这会立即提前交卷，停止本次考试计时，并保留已作答内容、附件和 Flag。选择题按现有答案评分，之后不能继续修改本次作答。若只是暂时离开，请选择“保存并返回”（计时继续）。':
+    'This submits the exam early, stops this attempt’s timer and keeps your answers, attachments and flags. Choice questions are graded using your current answers, and this attempt can no longer be edited. To leave temporarily, use Save & exit (the timer keeps running).',
+  取消: 'Cancel',
+  结束并保留作答: 'End and keep answers',
+  确认删除: 'Confirm deletion',
+  结束考试: 'End exam',
+  还没有试卷: 'No exams yet',
+  '导入一份 JSON 试卷，或从 AI 出题规范下载示例。':
+    'Import a JSON exam, or download a sample from Exam specification.',
+  '删除试卷：{0}': 'Delete exam: {0}',
+  删除试卷: 'Delete exam',
+  '删除答题记录：{0}': 'Delete attempt: {0}',
+  删除记录: 'Delete attempt',
+
   'Flag 表示考生对本题不确定、希望额外讲解，不代表答错。请对每道 flagged 为 true 的题额外讲解，即使自动得分已是满分：说明关键概念、推理过程和易错点，结合实际作答给出复习建议，但不要假定考生一定存在某种误解。未作答的标记题也要讲解。额外讲解不改变自动得分或评分规则。':
     'A Flag means the student is uncertain and wants an additional explanation; it does not mean the answer is wrong. Explain every question with flagged set to true, even when its automatic score is full marks: cover key concepts, reasoning and common pitfalls, and suggest review topics based on the actual response without assuming a particular misconception. Explain unanswered flagged questions too. Additional explanations must not change automatic scores or grading rules.',
   '## Flag 标记与额外讲解\n\n{0}\n\n标记题目（{1} 道）：{2}\n\n':

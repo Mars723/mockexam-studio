@@ -2264,3 +2264,102 @@ textarea::placeholder {
 .prompt-editor-toolbar .button {
   flex-shrink: 0;
 }
+
+/* Keep destructive actions separate from the exam selection button. */
+.exam-card-row {
+  position: relative;
+}
+.exam-card-row .exam-card {
+  padding-right: 70px;
+}
+.exam-delete {
+  position: absolute;
+  right: 17px;
+  bottom: 20px;
+  padding: 9px;
+}
+.button.danger-outline {
+  color: #a34c42;
+  background: #fff;
+  border: 1px solid #e3c8c3;
+}
+.button.danger-outline:hover {
+  background: #fcf1ef;
+  border-color: #be7f75;
+}
+.button.danger {
+  background: #a84337;
+  border: 1px solid #a84337;
+  color: #fff;
+}
+.button.danger:hover {
+  background: #8b352b;
+}
+.action-target {
+  display: block;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.action-target-detail {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.record-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 430px;
+}
+.record-main {
+  min-width: 0;
+}
+.record-main h3 {
+  overflow-wrap: anywhere;
+}
+.exam-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 720px) {
+  .exam-header-actions {
+    gap: 6px;
+  }
+  .exam-header-actions .button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .record-actions {
+    max-width: none;
+    width: 100%;
+  }
+  .exam-card-row .exam-card {
+    padding-right: 60px;
+  }
+  .exam-delete {
+    right: 12px;
+    bottom: 15px;
+  }
+}
+.exam-header {
+  height: auto;
+  min-height: 87px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.exam-heading {
+  min-width: 0;
+}
+.exam-heading b {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .exam-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .exam-header-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}

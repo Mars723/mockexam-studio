@@ -29,6 +29,8 @@ import {
   Monitor,
   CheckCircle2,
   Code2,
+  Trash2,
+  LogOut,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
@@ -81,6 +83,10 @@ import {
 } from '@/lib/exam';
 import { loadWorkspace, persistWorkspace, downloadFile } from '@/lib/storage';
 import { exportPaper, exportGrading } from '@/lib/export';
+import {
+  applyWorkspaceAction,
+  type WorkspaceAction,
+} from '@/lib/workspace-actions';
 const EMPTY_RESPONSE: ResponseValue = {};
 const initial: Workspace = { version: 1, exams: [sampleExam], attempts: [] };
 function mergeBackup(current: Workspace, incoming: Workspace): Workspace {
@@ -135,6 +141,7 @@ export default function Home() {
     [view, setView] = useState<'home' | 'exam' | 'review'>('home'),
     [attemptId, setAttemptId] = useState(''),
     [error, setError] = useState(''),
+    [pendingAction, setPendingAction] = useState<WorkspaceAction | null>(null),
     [pending, setPending] = useState<Exam | null>(null),
     [pendingBackup, setPendingBackup] = useState<Workspace | null>(null),
     [importing, setImporting] = useState(false),
@@ -163,6 +170,41 @@ export default function Home() {
     ),
     q = attempt ? qs[attempt.current] : null;
   const active = workspace.attempts.find((a) => a.status === 'active');
+  const actionExam =
+    pendingAction?.kind === 'delete_exam'
+      ? displayExams.find((e) => e.id === pendingAction.id)
+      : null;
+  const actionAttempt =
+    pendingAction && pendingAction.kind !== 'delete_exam'
+      ? workspace.attempts.find((a) => a.id === pendingAction.id)
+      : null;
+  function confirmWorkspaceAction() {
+    if (!ready || !pendingAction) return;
+    const action = pendingAction;
+    const current = workspaceRef.current;
+    const next = applyWorkspaceAction(current, action);
+    commit(next);
+    setPendingAction(null);
+    if (action.kind === 'delete_exam') {
+      if (selected === action.id) setSelected(next.exams[0]?.id || '');
+      notify(t('试卷已删除，已有答题记录已保留。'));
+      return;
+    }
+    setMapOpen(false);
+    setSubmitOpen(false);
+    if (action.kind === 'end_attempt') {
+      setAttemptId(action.id);
+      setView('review');
+      notify(t('考试已结束，已作答内容已保留，可查看结果或导出。'));
+    } else {
+      if (attemptId === action.id) setAttemptId('');
+      setView('home');
+      setTab('records');
+      notify(t('答题记录已删除。'));
+    }
+    if (document.fullscreenElement)
+      void document.exitFullscreen().catch(() => {});
+  }
   function notify(msg: string) {
     toast.add({ title: msg, type: 'success' });
   }
@@ -601,6 +643,62 @@ export default function Home() {
   const messages = (
     <>
       <Notifications />
+      <AlertDialog
+        open={!!pendingAction}
+        onOpenChange={(open) => {
+          if (!open) setPendingAction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogTitle>
+            {pendingAction?.kind === 'delete_exam'
+              ? t('删除这份试卷？')
+              : pendingAction?.kind === 'delete_attempt'
+                ? t('删除这条答题记录？')
+                : t('结束并退出本次考试？')}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            <span className="action-target">
+              {actionExam?.title || actionAttempt?.exam.title}
+            </span>
+            {actionAttempt && (
+              <span className="action-target-detail">
+                {actionAttempt.name || t('未填写姓名')} ·{' '}
+                {new Date(actionAttempt.startedAt).toLocaleString(
+                  locale === 'en' ? 'en-US' : 'zh-CN',
+                )}
+              </span>
+            )}
+            {pendingAction?.kind === 'delete_exam'
+              ? t(
+                  '只从“我的试卷”移除此试卷。已有答题记录、答案和进行中的考试会保留。之后可以重新导入试卷文件。',
+                )
+              : pendingAction?.kind === 'delete_attempt'
+                ? actionAttempt?.status === 'active'
+                  ? t(
+                      '这场考试仍在进行中。删除会终止本次考试，并移除这条记录的答案、附件和 Flag。试卷本身及其他记录会保留。删除后无法直接撤销。若想保留作答，请取消并选择“结束考试”。',
+                    )
+                  : t(
+                      '删除这条记录的答案、附件和 Flag。试卷本身及其他答题记录会保留。删除后无法直接撤销；如需保留，请先下载备份或批改包。',
+                    )
+                : t(
+                    '这会立即提前交卷，停止本次考试计时，并保留已作答内容、附件和 Flag。选择题按现有答案评分，之后不能继续修改本次作答。若只是暂时离开，请选择“保存并返回”（计时继续）。',
+                  )}
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('取消')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="button danger"
+              disabled={!ready || (!actionExam && !actionAttempt)}
+              onClick={confirmWorkspaceAction}
+            >
+              {pendingAction?.kind === 'end_attempt'
+                ? t('结束并保留作答')
+                : t('确认删除')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {error && (
         <div className="error-banner" role="alert">
           <AlertCircle size={19} />
@@ -665,6 +763,16 @@ export default function Home() {
             >
               <Save size={16} />
               <span>{t('保存并返回')}</span>
+            </button>
+            <button
+              className="button danger-outline"
+              disabled={!ready}
+              onClick={() =>
+                setPendingAction({ kind: 'end_attempt', id: attempt.id })
+              }
+            >
+              <LogOut size={16} />
+              <span>{t('结束考试')}</span>
             </button>
           </div>
         </header>
@@ -1094,6 +1202,16 @@ export default function Home() {
                   {t('继续作答')}
                   <ArrowRight size={16} />
                 </button>
+                <button
+                  className="button danger-outline"
+                  disabled={!ready}
+                  onClick={() =>
+                    setPendingAction({ kind: 'end_attempt', id: active.id })
+                  }
+                >
+                  <LogOut size={16} />
+                  {t('结束考试')}
+                </button>
               </div>
             )}
             <Tabs value={tab} onValueChange={(v) => setTab(String(v))}>
@@ -1173,55 +1291,79 @@ export default function Home() {
                         {t('导入')}
                       </button>
                     </div>
+                    {displayExams.length === 0 && (
+                      <Empty className="empty-state">
+                        <FileText size={30} />
+                        <h3>{t('还没有试卷')}</h3>
+                        <p>
+                          {t('导入一份 JSON 试卷，或从 AI 出题规范下载示例。')}
+                        </p>
+                      </Empty>
+                    )}
                     {displayExams.map((exam) => (
-                      <button
-                        key={exam.id}
-                        className={`exam-card ${selectedExam?.id === exam.id ? 'selected' : ''}`}
-                        onClick={() => setSelected(exam.id)}
-                        aria-pressed={selectedExam?.id === exam.id}
-                      >
-                        <span className="exam-icon">
-                          <FileText />
-                        </span>
-                        <span className="exam-info">
-                          <span className="tags">
-                            <span className="tag">{exam.subject}</span>
-                            <span className="tag subtle">
-                              {exam.id === sampleExam.id
-                                ? t('示例试卷')
-                                : t('已校验')}
+                      <div className="exam-card-row" key={exam.id}>
+                        <button
+                          className={`exam-card ${selectedExam?.id === exam.id ? 'selected' : ''}`}
+                          onClick={() => setSelected(exam.id)}
+                          aria-pressed={selectedExam?.id === exam.id}
+                        >
+                          <span className="exam-icon">
+                            <FileText />
+                          </span>
+                          <span className="exam-info">
+                            <span className="tags">
+                              <span className="tag">{exam.subject}</span>
+                              <span className="tag subtle">
+                                {exam.id === sampleExam.id
+                                  ? t('示例试卷')
+                                  : t('已校验')}
+                              </span>
+                            </span>
+                            <h3>{exam.title}</h3>
+                            <p>
+                              {exam.description ||
+                                t(
+                                  '{0} 个部分 · 评分细则完整',
+                                  exam.sections.length,
+                                )}
+                            </p>
+                            <span className="exam-meta">
+                              <span>
+                                <Clock3 size={14} />
+                                {exam.durationMinutes}
+                                {t('分钟')}
+                              </span>
+                              <span>
+                                {questionsOf(exam).length}
+                                {t('道题')}
+                              </span>
+                              <span>
+                                {exam.totalPoints}
+                                {t('分')}
+                              </span>
                             </span>
                           </span>
-                          <h3>{exam.title}</h3>
-                          <p>
-                            {exam.description ||
-                              t(
-                                '{0} 个部分 · 评分细则完整',
-                                exam.sections.length,
-                              )}
-                          </p>
-                          <span className="exam-meta">
-                            <span>
-                              <Clock3 size={14} />
-                              {exam.durationMinutes}
-                              {t('分钟')}
+                          {selectedExam?.id === exam.id && (
+                            <span className="selection-check">
+                              <Check size={15} />
                             </span>
-                            <span>
-                              {questionsOf(exam).length}
-                              {t('道题')}
-                            </span>
-                            <span>
-                              {exam.totalPoints}
-                              {t('分')}
-                            </span>
-                          </span>
-                        </span>
-                        {selectedExam?.id === exam.id && (
-                          <span className="selection-check">
-                            <Check size={15} />
-                          </span>
-                        )}
-                      </button>
+                          )}
+                        </button>
+                        <button
+                          className="exam-delete button danger-outline"
+                          disabled={!ready}
+                          aria-label={t('删除试卷：{0}', exam.title)}
+                          title={t('删除试卷')}
+                          onClick={() =>
+                            setPendingAction({
+                              kind: 'delete_exam',
+                              id: exam.id,
+                            })
+                          }
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     ))}
                     <div className="workflow">
                       <span className="eyebrow">
@@ -1433,6 +1575,35 @@ export default function Home() {
                           )}
                         </div>
                         <div className="record-actions">
+                          {a.status === 'active' && (
+                            <button
+                              className="button danger-outline"
+                              disabled={!ready}
+                              onClick={() =>
+                                setPendingAction({
+                                  kind: 'end_attempt',
+                                  id: a.id,
+                                })
+                              }
+                            >
+                              <LogOut size={15} />
+                              {t('结束考试')}
+                            </button>
+                          )}
+                          <button
+                            className="button danger-outline"
+                            disabled={!ready}
+                            aria-label={t('删除答题记录：{0}', a.exam.title)}
+                            onClick={() =>
+                              setPendingAction({
+                                kind: 'delete_attempt',
+                                id: a.id,
+                              })
+                            }
+                          >
+                            <Trash2 size={15} />
+                            {t('删除记录')}
+                          </button>
                           <button
                             className="button secondary"
                             onClick={() => grading(a)}
