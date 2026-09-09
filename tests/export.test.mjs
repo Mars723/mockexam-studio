@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const server=await createServer({configFile:false,server:{middlewareMode:true},appType:'custom',plugins:[react()],resolve:{alias:{'@':process.cwd()}}});
 try{
 const {setLocale}=await server.ssrLoadModule('/lib/i18n.ts');setLocale('zh');
-const {paperHTML,gradingData}=await server.ssrLoadModule('/lib/export.tsx');
+const {paperHTML,gradingData,gradingFiles}=await server.ssrLoadModule('/lib/export.tsx');
 const {sampleExam}=await server.ssrLoadModule('/lib/sample.ts');
 const student=paperHTML(sampleExam),teacher=paperHTML(sampleExam,true);
 assert.match(student,/class="katex/,'LaTeX rendered as math');
@@ -21,6 +21,34 @@ assert.equal(d.questions[3].autoScore,null);
 assert.deepEqual(d.questions[3].rubric,sampleExam.sections[0].questions[3].rubric);
 assert.equal(d.attempt.answers.q4.attachments[0].data,'data:text/plain;base64,aGVsbG8=');
 assert.equal(d.summary.manualTotal,24);
+// Flags request additional explanation independently of correctness or grading mode.
+for (const locale of ['zh', 'en']) {
+  setLocale(locale);
+  const flagged = {...a, flagged: ['q1', 'q2', 'q4']};
+  const files = gradingFiles(flagged);
+  const decode = bytes => new TextDecoder().decode(bytes);
+  const json = JSON.parse(decode(files['grading.json']));
+  const md = decode(files['grading.md']);
+  assert.deepEqual(json.flaggedQuestions, [{id:'q1',questionNumber:1},{id:'q2',questionNumber:2},{id:'q4',questionNumber:4}]);
+  assert.equal(json.questions[0].flagged, true);
+  assert.equal(json.questions[0].autoScore, 4, 'Correct flagged choice keeps full credit');
+  assert.equal(json.questions[1].flagged, true, 'Unanswered flagged questions are retained');
+  assert.equal(json.questions[3].flagged, true);
+  assert.equal(json.questions[3].autoScore, null, 'Flagged written responses remain pending');
+  assert.equal(json.questions[2].flagged, false);
+  assert.deepEqual(json.summary, d.summary, 'Flags do not alter grading');
+  assert.deepEqual(json.exam, a.exam, 'All answers and grading rules remain intact');
+  assert.equal(decode(files['attachments/q4-1-proof.txt']), 'hello');
+  assert.ok(md.includes(json.reviewInstructions), 'Both JSON and Markdown carry explanation instructions');
+  assert.equal((md.match(locale === 'en' ? /\*\*Flag: flagged/g : /\*\*Flag：已标记/g)||[]).length, 3);
+  assert.match(json.reviewInstructions, locale === 'en' ? /even when its automatic score is full marks/ : /即使自动得分已是满分/);
+  const cleared = gradingFiles({...a, flagged: []});
+  const clearedData = JSON.parse(decode(cleared['grading.json']));
+  assert.equal(clearedData.flaggedQuestions.length, 0);
+  assert.ok(clearedData.questions.every(q => q.flagged === false));
+  assert.ok(!decode(cleared['grading.md']).includes(locale === 'en' ? '**Flag: flagged' : '**Flag：已标记'), 'Removing a flag removes the explanation marker');
+}
+setLocale('zh');
 const {renderToStaticMarkup}=await import('react-dom/server');
 const React=await import('react');
 const {RichText}=await server.ssrLoadModule('/components/rich-text.tsx');

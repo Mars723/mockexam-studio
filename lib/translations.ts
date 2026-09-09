@@ -1,4 +1,14 @@
 export const translations: Record<string, string> = {
+  'Flag 表示考生对本题不确定、希望额外讲解，不代表答错。请对每道 flagged 为 true 的题额外讲解，即使自动得分已是满分：说明关键概念、推理过程和易错点，结合实际作答给出复习建议，但不要假定考生一定存在某种误解。未作答的标记题也要讲解。额外讲解不改变自动得分或评分规则。':
+    'A Flag means the student is uncertain and wants an additional explanation; it does not mean the answer is wrong. Explain every question with flagged set to true, even when its automatic score is full marks: cover key concepts, reasoning and common pitfalls, and suggest review topics based on the actual response without assuming a particular misconception. Explain unanswered flagged questions too. Additional explanations must not change automatic scores or grading rules.',
+  '## Flag 标记与额外讲解\n\n{0}\n\n标记题目（{1} 道）：{2}\n\n':
+    '## Flags and additional explanations\n\n{0}\n\nFlagged questions ({1}): {2}\n\n',
+  '第 {0} 题（{1}）': 'Question {0} ({1})',
+  无标记题目: 'None',
+  '**Flag：已标记，需要额外讲解（即使答对）。**\n':
+    '**Flag: flagged for additional explanation (even if correct).**\n',
+  'Flag：未标记。\n': 'Flag: not flagged.\n',
+
   试卷: 'exam',
   记录: 'record',
   保存失败: 'Save failed',
