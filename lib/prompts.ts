@@ -29,7 +29,7 @@ Give sufficient context, but do not name the technique to use unless choosing a 
 Solve and independently check every question before finalizing it. Single-choice questions have exactly one defensible answer; multiple-choice keys must include all correct options. Supply complete reference answers for every blank and written response. Set each question's points and a non-overlapping, operational rubric in advance. Explain accepted alternatives, partial credit, units, tolerances and precision where relevant. Rubric totals must equal the question points, and all question points must sum to totalPoints. Automatic grading, question instructions and rubrics must agree.
 
 6. Output contract
-Follow the complete MockExam specification appended below. Use valid JSON escaping for LaTeX. Ensure math in subquestion labels and table headings is delimited correctly, and programming code is in fenced code blocks. Flatten separately scored subquestions and use shared materials where needed.
+Follow the complete MockExam file specification that I provide separately. If it is missing, ask me to provide it before generating the exam. Use valid JSON escaping for LaTeX. Ensure math in subquestion labels and table headings is delimited correctly, and programming code is in fenced code blocks. Flatten separately scored subquestions and use shared materials where needed.
 Before output, silently check coverage, context completeness, absence of hints, solutions, scoring arithmetic, JSON syntax and schema references. If clarification is unnecessary, return ONLY the complete importable JSON object — no Markdown fences, commentary, answers outside the file, or placeholders.
 `
     : `你是一名严谨的课程教师，请为我编写一份题目自洽、背景完整的模拟考试。我已上传包含上课内容、作业、problem set、quiz 和复习资料的文件。请先仔细阅读每一个文件，再开始出题。
@@ -53,7 +53,7 @@ ${o.scope.trim() ? `额外范围与重点：${o.scope.trim()}\n` : ''}
 先求解并独立核对每一题。单选只有一个合理正确答案，多选答案集合完整。每个填空和解答题都给出完整参考答案。提前设置每题分值及可执行、不重复计分的 rubric；按需说明等价答案、步骤分、单位、误差与精度要求。rubric 各项分值之和等于该题 points，所有题目的 points 之和等于 totalPoints。自动评分规则必须与题干、rubric 一致。
 
 六、输出要求
-严格遵守下面附加的完整 MockExam 规范，正确处理 JSON 中 LaTeX 反斜线转义；小题标签和表头里的公式也必须正确使用数学定界符。编程代码使用代码围栏。独立计分的小问拆成独立 Question，共用背景放入 materials。
+严格遵守我另外提供的完整 MockExam 文件规范；如果尚未收到规范，请先向我索取，再生成试卷。正确处理 JSON 中 LaTeX 反斜线转义；小题标签和表头里的公式也必须正确使用数学定界符。编程代码使用代码围栏。独立计分的小问拆成独立 Question，共用背景放入 materials。
 输出前在内部核对：知识点覆盖、背景完整、没有提示、答案正确、分值计算、JSON 语法与引用关系。无须澄清时，只输出一份完整、可导入的 JSON 对象，不要 Markdown 围栏、前后解释、文件外答案或占位内容。
 `;
 }
