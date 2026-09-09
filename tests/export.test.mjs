@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import assert from 'node:assert/strict';
 const server=await createServer({configFile:false,server:{middlewareMode:true},appType:'custom',plugins:[react()],resolve:{alias:{'@':process.cwd()}}});
 try{
+const {setLocale}=await server.ssrLoadModule('/lib/i18n.ts');setLocale('zh');
 const {paperHTML,gradingData}=await server.ssrLoadModule('/lib/export.tsx');
 const {sampleExam}=await server.ssrLoadModule('/lib/sample.ts');
 const student=paperHTML(sampleExam),teacher=paperHTML(sampleExam,true);

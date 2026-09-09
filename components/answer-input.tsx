@@ -1,5 +1,6 @@
 'use client';
-import { useState, useRef } from 'react';
+import { t } from '@/lib/i18n';
+import { useState, useRef, memo } from 'react';
 import { Code2, ImagePlus, Paperclip, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -19,6 +20,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
+import { useLocale } from './language-picker';
 import { RichText } from './rich-text';
 import { CodeEditor } from './code-editor';
 import { isAuto, type Question, type ResponseValue } from '@/lib/exam';
@@ -41,7 +43,10 @@ function Picker({
 }: {
   value: string;
   onChange: (v: string) => void;
-  options: { id: string; text: string }[];
+  options: {
+    id: string;
+    text: string;
+  }[];
   label: string;
   disabledValues?: string[];
 }) {
@@ -49,7 +54,7 @@ function Picker({
     <Select value={value || null} onValueChange={(v) => onChange(v || '')}>
       <SelectTrigger className="answer-select" aria-label={label}>
         <SelectValue>
-          {value ? options.find((o) => o.id === value)?.text : '请选择'}
+          {value ? options.find((o) => o.id === value)?.text : t('请选择')}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
@@ -59,14 +64,14 @@ function Picker({
             value={o.id}
             disabled={disabledValues.includes(o.id)}
           >
-            {o.text}
+            <RichText text={o.text} />
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
 }
-export function AnswerInput({
+function AnswerInputContent({
   q,
   value,
   onChange,
@@ -77,6 +82,7 @@ export function AnswerInput({
   onChange: (v: ResponseValue) => void;
   onError: (msg: string) => void;
 }) {
+  useLocale();
   const [code, setCode] = useState(q.type === 'code'),
     [language, setLanguage] = useState(
       q.language && languageLabels[q.language] ? q.language : 'python',
@@ -94,15 +100,15 @@ export function AnswerInput({
     try {
       const existing = value.attachments || [];
       if (existing.length + files.length > 8)
-        throw new Error('每题最多 8 个附件');
+        throw new Error(t('每题最多 8 个附件'));
       if ([...files].some((f) => f.size > 8 * 1024 * 1024))
-        throw new Error('单个附件不能超过 8 MB');
+        throw new Error(t('单个附件不能超过 8 MB'));
       if (
         existing.reduce((n, f) => n + f.data.length * 0.75, 0) +
           [...files].reduce((n, f) => n + f.size, 0) >
         20 * 1024 * 1024
       )
-        throw new Error('每题附件总大小不能超过 20 MB');
+        throw new Error(t('每题附件总大小不能超过 20 MB'));
       const added = await Promise.all(
         [...files].map(async (f) => ({
           name: f.name,
@@ -131,7 +137,7 @@ export function AnswerInput({
               className={`option ${value.selected?.includes(o.id) ? 'chosen' : ''}`}
             >
               <Checkbox
-                aria-label={`选项 ${o.id}`}
+                aria-label={t('选项 {0}', o.id)}
                 checked={!!value.selected?.includes(o.id)}
                 onCheckedChange={(checked) =>
                   onChange({
@@ -156,7 +162,7 @@ export function AnswerInput({
                 key={o.id}
                 className={`option ${value.selected?.includes(o.id) ? 'chosen' : ''}`}
               >
-                <RadioGroupItem value={o.id} aria-label={`选项 ${o.id}`} />
+                <RadioGroupItem value={o.id} aria-label={t('选项 {0}', o.id)} />
                 <span className="option-letter">{o.id}</span>
                 <RichText text={o.text} />
               </label>
@@ -167,7 +173,7 @@ export function AnswerInput({
           className="text-button"
           onClick={() => onChange({ ...value, selected: [] })}
         >
-          清除选择
+          {t('清除选择')}
         </button>
       </div>
     );
@@ -177,11 +183,11 @@ export function AnswerInput({
       <div className="fields">
         {q.blanks!.map((b) => (
           <label key={b.id}>
-            <span>{b.label}</span>
+            <RichText text={b.label} className="field-label" />
             <input
               value={value.fields?.[b.id] || ''}
               onChange={(e) => field(b.id, e.target.value)}
-              placeholder="输入答案"
+              placeholder={t('输入答案')}
             />
           </label>
         ))}
@@ -197,7 +203,7 @@ export function AnswerInput({
               value={value.fields?.[it.id] || ''}
               onChange={(v) => field(it.id, v)}
               options={q.matches!}
-              label={`${it.text} 对应项`}
+              label={t('{0} 对应项', it.text)}
             />
           </div>
         ))}
@@ -208,12 +214,12 @@ export function AnswerInput({
       <div className="fields">
         {q.items!.map((_, i) => (
           <div className="match-row" key={i}>
-            <span>第 {i + 1} 位</span>
+            <span>{t('第 {0} 位', i + 1)}</span>
             <Picker
               value={value.fields?.[i + 1] || ''}
               onChange={(v) => field(String(i + 1), v)}
               options={q.items!}
-              label={`第 ${i + 1} 位`}
+              label={t('第 {0} 位', i + 1)}
               disabledValues={Object.entries(value.fields || {})
                 .filter(([k]) => k !== String(i + 1))
                 .map(([, v]) => v)}
@@ -224,7 +230,7 @@ export function AnswerInput({
           className="text-button"
           onClick={() => onChange({ ...value, fields: {} })}
         >
-          重置排序
+          {t('重置排序')}
         </button>
       </div>
     );
@@ -235,14 +241,18 @@ export function AnswerInput({
           <TableRow>
             <TableHead />
             {q.columns!.map((c, i) => (
-              <TableHead key={i}>{c}</TableHead>
+              <TableHead key={i}>
+                <RichText text={c} />
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {q.rows!.map((r, i) => (
             <TableRow key={i}>
-              <TableHead>{r}</TableHead>
+              <TableHead>
+                <RichText text={r} />
+              </TableHead>
               {q.columns!.map((c, j) => (
                 <TableCell key={j}>
                   <input
@@ -262,11 +272,11 @@ export function AnswerInput({
       <div className="editor-toolbar">
         <label>
           <Code2 size={16} />
-          <span>代码模式</span>
+          <span>{t('代码模式')}</span>
           <Switch
             checked={code}
             onCheckedChange={setCode}
-            aria-label="代码模式"
+            aria-label={t('代码模式')}
           />
         </label>
         {code ? (
@@ -274,8 +284,8 @@ export function AnswerInput({
             value={language}
             onValueChange={(v) => setLanguage(v || 'text')}
           >
-            <SelectTrigger aria-label="代码语言">
-              <SelectValue>{languageLabels[language]}</SelectValue>
+            <SelectTrigger aria-label={t('代码语言')}>
+              <SelectValue>{t(languageLabels[language])}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {Object.entries(languageLabels).map(([v, l]) => (
@@ -287,7 +297,7 @@ export function AnswerInput({
           </Select>
         ) : (
           <button className="text-button" onClick={() => setPreview(!preview)}>
-            {preview ? '继续编辑' : '预览公式'}
+            {preview ? t('继续编辑') : t('预览公式')}
           </button>
         )}
       </div>
@@ -299,7 +309,7 @@ export function AnswerInput({
         />
       ) : preview ? (
         <div className="answer-preview">
-          <RichText text={value.text || '尚未输入答案。'} />
+          <RichText text={value.text || t('尚未输入答案。')} />
         </div>
       ) : (
         <textarea
@@ -308,10 +318,10 @@ export function AnswerInput({
           onChange={(e) => onChange({ ...value, text: e.target.value })}
           placeholder={
             q.type === 'drawing'
-              ? '请在纸上完成作图，上传照片或 PDF。可在此补充说明。'
+              ? t('请在纸上完成作图，上传照片或 PDF。可在此补充说明。')
               : q.type === 'file_response'
-                ? '上传实践成果，可在此补充说明。'
-                : '在此输入你的答案。支持 Markdown 和 $LaTeX$ 公式。'
+                ? t('上传实践成果，可在此补充说明。')
+                : t('在此输入你的答案。支持 Markdown 和 $LaTeX$ 公式。')
           }
           spellCheck={false}
         />
@@ -319,10 +329,15 @@ export function AnswerInput({
       <div className="editor-foot">
         <span id="code-help">
           {code
-            ? 'Tab 缩进 · Shift+Tab 反缩进 · 括号自动补全 · Esc 后 Tab 移出编辑器'
-            : '支持公式预览；代码模式可随时切换，内容保留'}
+            ? t(
+                'Tab 缩进 · Shift+Tab 反缩进 · 括号自动补全 · Esc 后 Tab 移出编辑器',
+              )
+            : t('支持公式预览；代码模式可随时切换，内容保留')}
         </span>
-        <span>{value.text?.length || 0} 字符</span>
+        <span>
+          {value.text?.length || 0}
+          {t('字符')}
+        </span>
       </div>
       <label className={`attach-button ${uploading ? 'disabled' : ''}`}>
         <input
@@ -336,8 +351,8 @@ export function AnswerInput({
           }}
         />
         <ImagePlus size={16} />
-        {uploading ? '正在读取附件…' : '添加过程照片 / 文件'}
-        <span>单个 ≤ 8 MB</span>
+        {uploading ? t('正在读取附件…') : t('添加过程照片 / 文件')}
+        <span>{t('单个 ≤ 8 MB')}</span>
       </label>
       {value.attachments?.map((f, i) => (
         <div key={i} className="attachment">
@@ -345,7 +360,7 @@ export function AnswerInput({
           <span>{f.name}</span>
           <button
             className="text-button"
-            aria-label={`移除附件 ${f.name}`}
+            aria-label={t('移除附件 {0}', f.name)}
             onClick={() =>
               onChange({
                 ...value,
@@ -360,3 +375,5 @@ export function AnswerInput({
     </div>
   );
 }
+
+export const AnswerInput = memo(AnswerInputContent);

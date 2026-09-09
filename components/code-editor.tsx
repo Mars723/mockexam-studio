@@ -1,4 +1,5 @@
 'use client';
+import { t } from '@/lib/i18n';
 import { useEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { EditorState, Compartment } from '@codemirror/state';
@@ -50,7 +51,7 @@ export function CodeEditor({
           lang.current.of(languageOf(language)),
           editable.current.of(EditorState.readOnly.of(readOnly)),
           EditorView.contentAttributes.of({
-            'aria-label': '代码答案编辑器',
+            'aria-label': t('代码答案编辑器'),
             'aria-describedby': 'code-help',
           }),
           EditorView.updateListener.of((u) => {

@@ -1,4 +1,5 @@
-import { validateWorkspace, type Workspace } from './exam';
+import { t } from './i18n.ts';
+import { validateWorkspace, type Workspace } from './exam.ts';
 const DB = 'mockexam-studio-v1';
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -11,8 +12,8 @@ function openDB(): Promise<IDBDatabase> {
 export async function loadWorkspace(): Promise<Workspace | null> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const t = db.transaction('workspace', 'readonly');
-    const r = t.objectStore('workspace').get('current');
+    const transaction = db.transaction('workspace', 'readonly');
+    const r = transaction.objectStore('workspace').get('current');
     r.onsuccess = () => {
       try {
         resolve(r.result ? validateWorkspace(r.result) : null);
@@ -21,25 +22,25 @@ export async function loadWorkspace(): Promise<Workspace | null> {
       }
     };
     r.onerror = () => reject(r.error);
-    t.oncomplete = () => db.close();
+    transaction.oncomplete = () => db.close();
   });
 }
 export async function persistWorkspace(state: Workspace) {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
-    const t = db.transaction('workspace', 'readwrite');
-    t.objectStore('workspace').put(state, 'current');
-    t.oncomplete = () => {
+    const transaction = db.transaction('workspace', 'readwrite');
+    transaction.objectStore('workspace').put(state, 'current');
+    transaction.oncomplete = () => {
       db.close();
       resolve();
     };
-    t.onerror = () => {
+    transaction.onerror = () => {
       db.close();
-      reject(t.error);
+      reject(transaction.error);
     };
-    t.onabort = () => {
+    transaction.onabort = () => {
       db.close();
-      reject(t.error || new Error('保存被中断'));
+      reject(transaction.error || new Error(t('保存被中断')));
     };
   });
 }

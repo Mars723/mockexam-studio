@@ -1,4 +1,5 @@
 'use client';
+import { t } from '@/lib/i18n';
 import { CheckCircle2 } from 'lucide-react';
 import {
   ToastProvider,
@@ -21,7 +22,7 @@ function Notices() {
             <ToastContent>
               <CheckCircle2 size={18} />
               <ToastTitle className="flex-1 text-sm" />
-              <ToastClose aria-label="关闭通知" className="text-white" />
+              <ToastClose aria-label={t('关闭通知')} className="text-white" />
             </ToastContent>
           </Toast>
         ))}

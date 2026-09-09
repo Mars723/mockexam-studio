@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'MockExam · 模拟考试工作台',
-  description: '导入 AI 试卷，计时模拟考试，打印与导出完整评分材料。',
+  title: 'MockExam · Exam Workspace',
+  description:
+    'Import AI-generated exams, practice with a timer, and export printable papers and complete grading packages.',
 };
 
 export default function RootLayout({
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

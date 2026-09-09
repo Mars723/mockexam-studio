@@ -1,16 +1,20 @@
 'use client';
+import { t } from '@/lib/i18n';
+import { memo } from 'react';
+import { useLocale } from './language-picker';
 import Markdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { normalizeMath } from '../lib/math';
-export function RichText({
+function RichTextContent({
   text,
   className = '',
 }: {
   text: string;
   className?: string;
 }) {
+  useLocale();
   return (
     <div className={`rich-text ${className}`}>
       <Markdown
@@ -37,7 +41,7 @@ export function RichText({
             </a>
           ),
           img: ({ src, alt }) => (
-            <img src={src} alt={alt || '题目配图'} loading="eager" />
+            <img src={src} alt={alt || t('题目配图')} loading="eager" />
           ),
         }}
       >
@@ -46,3 +50,5 @@ export function RichText({
     </div>
   );
 }
+
+export const RichText = memo(RichTextContent);

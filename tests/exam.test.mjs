@@ -1,3 +1,5 @@
+import {setLocale} from '../lib/i18n.ts';
+setLocale('zh');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateExam,validateWorkspace,gradeQuestion,scoreAttempt,remainingSeconds,updateAnswer,finishAttempt,isAnswered,questionsOf,fieldKeys} from '../lib/exam.ts';
